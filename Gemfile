@@ -1,25 +1,34 @@
 source 'https://rubygems.org'
-ruby "2.1.9"
-gem 'rails', '~> 3.2.22'
-
+ruby "2.4.0"
+#gem 'rails', '~> 3.2.22'
+gem 'rails', '5.1.3.rc3'
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
-
-
+gem 'activeadmin', '1.0.0'
+gem 'pg', '0.20.0'
+gem 'devise'
+gem 'net-ssh'
 # Gems used only for assets and not required
 # in production environments by default.
+  gem 'font-awesome-rails', '~> 4.7', '>= 4.7.0.2'
 group :assets do
-  gem 'sass-rails',   '~> 3.2.3'
-  gem 'coffee-rails', '~> 3.2.1'
-
+  gem 'sass-rails',   '~> 5.0.6'
+  gem 'coffee-rails', '~> 4.2.1'
   # See https://github.com/sstephenson/execjs#readme for more supported runtimes
   # gem 'therubyracer', :platforms => :ruby
 
-  gem 'uglifier', '>= 1.0.3'
+  gem 'uglifier', '>= 3.2.0'
 end
 
-gem 'jquery-rails'
+gem 'jquery-rails', '>= 4.3.1'
+
+# active admin template
+gem "active_material", github: "vigetlabs/active_material"
+
+# adding charts
+gem 'chartkick'
+gem 'groupdate'
 
 # Prevent Heroku inject plugins at deploy time
 gem 'rails_12factor'
@@ -38,3 +47,10 @@ gem 'rails_12factor'
 
 # To use debugger
 # gem 'debugger'
+
+group :development, :test do
+	gem 'dotenv-rails'
+	gem 'factory_girl_rails'
+	gem 'byebug'
+	
+end

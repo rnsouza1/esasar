@@ -6,5 +6,9 @@ applications:
   name: ESASAR
   host: esasar
   disk_quota: 1024M
+  command: rake db:migrate && bin/rails server -p $PORT -e $RAILS_ENV
+  command: rake tivoli_import:populate_elapsed_time
   services:
+  - Workload Scheduler-8e
+  - Redis Cloud-ay
   - Compose for PostgreSQL-al
