@@ -11,7 +11,6 @@ gem 'devise'
 gem 'net-ssh'
 # Gems used only for assets and not required
 # in production environments by default.
-  gem 'font-awesome-rails', '~> 4.7', '>= 4.7.0.2'
 group :assets do
   gem 'sass-rails',   '~> 5.0.6'
   gem 'coffee-rails', '~> 4.2.1'
@@ -21,10 +20,13 @@ group :assets do
   gem 'uglifier', '>= 3.2.0'
 end
 
+gem 'bootstrap-sass'
 gem 'jquery-rails', '>= 4.3.1'
+gem 'font-awesome-rails', '~> 4.7', '>= 4.7.0.2'
 
 # active admin template
 gem "active_material", github: "vigetlabs/active_material"
+#gem 'active_bootstrap_skin'
 
 # adding charts
 gem 'chartkick'
@@ -48,8 +50,8 @@ gem 'rails_12factor'
 # To use debugger
 # gem 'debugger'
 
-group :development, :test do
 	gem 'dotenv-rails'
+group :development, :test do
 	gem 'factory_girl_rails'
 	gem 'byebug'
 	

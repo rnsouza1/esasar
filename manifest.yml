@@ -7,8 +7,10 @@ applications:
   host: esasar
   disk_quota: 1024M
   command: rake db:migrate && bin/rails server -p $PORT -e $RAILS_ENV
-  command: rake tivoli_import:populate_elapsed_time
+#  command: rake tivoli_import:jobs_history["28/08/2017, 30/08/2017"] not working connections
+#  command: rake datastage_import:live
+#  command: rake tivoli_import:live["B03ACIAPP017.ahe.boulder.ibm.com"]
+#  command: rake tivoli_import:live["B03ACIAPP018.ahe.boulder.ibm.com"]
+#  command: rake tivoli_import:live["B03ACIAPP019.ahe.boulder.ibm.com"]
   services:
-  - Workload Scheduler-8e
-  - Redis Cloud-ay
-  - Compose for PostgreSQL-al
+  - ElephantSQL-kt

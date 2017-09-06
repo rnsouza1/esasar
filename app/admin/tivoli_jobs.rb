@@ -17,7 +17,7 @@ ActiveAdmin.register TivoliJob do
     column :user_id_run
     #column :schedule
     column :script
-    #column :dependency
+    column :dependency
     column "" do |j|
       link_to fa_icon('book 2x'), admin_tivoli_histories_path + "?utf8=%E2%9C%93&q%5Bworkstation_equals%5D=#{j.workstation}&q%5Bjob_equals%5D=#{j.job}&commit=Filter&order=id_desc", title: "Check job history" 
     end
@@ -66,19 +66,19 @@ ActiveAdmin.register TivoliJob do
           row :schedule
           row :script
           row "Dependency" do |c|
-            c.dependency.gsub(",", ",<br>").html_safe
+            c.dependency.gsub(",", ",<br>").html_safe unless c.dependency.blank?
           end
           row :stream_related        
         end
       end  
 
       column do
-        panel "Job Performance", :style => "padding: 0 20px" do          
-          div do
-            span link_to fa_icon('book 2x') + " See history jobs", admin_tivoli_histories_path + "?utf8=%E2%9C%93&q%5Bworkstation_equals%5D=#{tivoli_job.workstation}&q%5Bjob_equals%5D=#{tivoli_job.job}&commit=Filter&order=id_desc", title: "Check job history"
-            span "  |  "+ tivoli_job.tivoli_histories.count.to_s + " jobs in history"
+        panel "Job Performance for: #{tivoli_job.workstation}##{tivoli_job.stream}.#{tivoli_job.job}" do
+          div :style => "padding: 0 15px;" do
+            span tivoli_job.tivoli_histories.count.to_s + " jobs in history, "
+            span link_to ("check here " + fa_icon('book 1x')).html_safe, admin_tivoli_histories_path + "?utf8=%E2%9C%93&q%5Bworkstation_equals%5D=#{tivoli_job.workstation}&q%5Bjob_equals%5D=#{tivoli_job.job}&commit=Filter&order=id_desc", title: "Check job history"
           end
-          canvas "myChart", :id => "myChart", "data-dates" => "#{ tivoli_job.tivoli_histories.order(:start_datetime).collect{|x| x.start_datetime.strftime('%m/%d')} }", "data-elapsed_time" => "#{ tivoli_job.tivoli_histories.order(:start_datetime).collect{|x| x.elapsed_time[3..4]} }"
+          canvas "myChart", :style => "padding: 0 5px 0 15px;", :id => "myChart", "data-dates" => "#{ tivoli_job.tivoli_histories.order(:start_datetime).collect{|x| x.start_datetime.strftime('%m/%d')} }", "data-elapsed_time" => "#{ tivoli_job.tivoli_histories.order(:start_datetime).collect{|x| x.elapsed_time[3..4]} }"
         end
       end
     end

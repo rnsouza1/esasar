@@ -4,6 +4,7 @@ require 'net/ssh'
 
 ##### to call this method send date by shell using this cmd: rake tivoli_import:jobs_history[$(date +'%d/%m/%Y')]
 
+##### to call this method send date by shell using this cmd: rake tivoli_import:jobs_history["02/08/2017, 21/08/2017"]
 namespace :tivoli_import do
   task :jobs_history, [:dt_start, :dt_end] => :environment do |t, args|
 	@dt_start = args[:dt_start] #args[:date_to_import].split(',')[0]
@@ -14,9 +15,10 @@ namespace :tivoli_import do
 	@date_range = ( @dt_start.to_date..@dt_end.to_date ).map(&:to_date) #.collect{|d| d.strftime("%m.%d")}
 	@count = 0
 
-  	p "Creating load script for date #{@dt_start} to #{@dt_end}"
+  p "Creating load script for date #{@dt_start} to #{@dt_end}"
 	@workstations.each do |w|
 		@hostname = w
+		p "#{@hostname} - #{@username}: #{@password}"
 		@ssh = Net::SSH.start(@hostname, @username, :password => @password)
 		p "#{w} Server logged!"
 		
@@ -107,7 +109,7 @@ namespace :tivoli_import do
   task :dependency_load_from_file => :environment do
 
  	### Parse CSV file from public dir
-    directory = Rails.public_path
+  directory = Rails.public_path
 	file = File.open(File.join(directory, 'tivoli-jobs-2017-08-03.csv'))
 	@csv = CSV.parse(file, :headers => true)
 
@@ -143,10 +145,45 @@ namespace :tivoli_import do
 
 ##### to call this method using this cmd: rake tivoli_import:populate_elapsed_time
   task :populate_elapsed_time => :environment do
-  	TivoliHistory.all.each do |t|
+  	TivoliHistory.where(elapsed_time: nil).each do |t|
     	t.update( elapsed_time: Time.at(t.end_datetime - t.start_datetime).utc.strftime("%H:%M:%S") )
     end
 	end
+
+
+##### to call this method send date by shell using this cmd: rake tivoli_import:live["B03ACIAPP017.ahe.boulder.ibm.com"]
+  task :live, [:hostname] => :environment do |t, args|
+
+		@username = ENV['AHE_SERVER_USER']
+		@password = ENV['AHE_SERVER_PWD']
+		@hostname = args[:hostname]
+		@ssh = Net::SSH.start(@hostname, @username, :password => @password)
+		p "#{@ssh.host} Server logged!"
+
+
+		while true
+			p get_dsd_data = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv") #.split("\n")
+			
+			begin
+				directory = Rails.public_path
+				file = File.open( File.join(directory, 'live_tiv_data_'+@hostname+'.txt'), 'w') 
+				file.truncate(0)
+				file.write(get_dsd_data)
+
+			rescue IOError => e
+				p "some error occur when try to open the file or dir is not writable."
+			ensure
+				file.close unless file.nil?
+			end
+			arr = Array.new
+			p arr = File.readlines(File.join(directory, 'live_tiv_data_'+@hostname+'.txt')) #.collect{|c| c.gsub!("\t\t", "").gsub!("\n", "").split("\t")[1..10]}
+			sleep 5
+			file.close unless file.nil?
+		end
+
+	end
+
+
 
   private
 
@@ -165,25 +202,25 @@ namespace :tivoli_import do
   		tiv = tiv_original
   	end
 
-	if tiv.blank?
-		stream_related 	= prepare_stream_related(stream)
-  		user 			= ssh.exec!("head #{log} |grep USER").split(' ')[3]
-		script 			= ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
+		if tiv.blank?
+			stream_related 	= prepare_stream_related(stream)
+	  		user 			= ssh.exec!("head #{log} |grep USER").split(' ')[3]
+			script 			= ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
 
-		p tiv_new = TivoliJob.create(workstation: workstation, stream: stream, job: job, server_run: server_run, user_id_run: user, script: script, stream_related: stream_related)
-		
-		return tiv_new.id
-	else 
-		return tiv.first.id
-	end
+			p tiv_new = TivoliJob.create(workstation: workstation, stream: stream, job: job, server_run: server_run, user_id_run: user, script: script, stream_related: stream_related)
+			
+			return tiv_new.id
+		else 
+			return tiv.first.id
+		end
   end
 
   def set_schedule(jobs_hist)
-	@string_array = []
-	jobs_hist.each do |j|
-		@string_array.push(j.start_datetime.strftime("%a")[0..2])
-	end
-  	return @string_array.uniq.join("','")
+		@string_array = []
+		jobs_hist.each do |j|
+			@string_array.push(j.start_datetime.strftime("%a")[0..2])
+		end
+	 	return @string_array.uniq.join("','")
   end
 
 end

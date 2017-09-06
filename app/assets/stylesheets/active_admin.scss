@@ -11,8 +11,17 @@
 @import "active_admin/mixins";
 //@import "active_admin/base";
 @import "active_material";
+//@import "active_bootstrap_skin";
 //@import "font-awesome";
-@import "font-awesome.css";
+@import "font-awesome";
+
+// Modal Bootstrap
+//@import "bootstrap";
+//@import "bootstrap_custom";
+
+// Components w/ JavaScript
+@import "bootstrap/modals";
+
 
 // Overriding any non-variable SASS must be done after the fact.
 // For example, to change the default status-tag color:
@@ -30,4 +39,12 @@
  }
  body,html {
 	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif !important;
+}
+.text{
+	min-width: 380px !important
+}
+#liverun .panel_contents{ 
+	background-color: white;
+	float: left;
+	padding: 10px;
 }
