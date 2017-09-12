@@ -46,7 +46,7 @@ ActiveAdmin.register_page "Live Run" do
                         job_histories = tivoli_job.tivoli_histories.where.not(status: "ERR").order(:start_datetime).last(10)
                         dates         = job_histories.collect{|x| x.start_datetime.strftime('%m/%d')}
                         elapsed_times = job_histories.collect{|x| x.elapsed_time[3..4]} 
-                        link_to @chart.html_safe, "#", "data-dates" => "#{ dates }", "data-elapsed_time" => "#{ elapsed_times }", "data-toggle" => "modal", "data-target" => "#modChart"
+                        link_to @chart.html_safe, "#", "data-dates" => "#{ dates }", "data-elapsed_time" => "#{ elapsed_times }", "data-job_name" => "#{line_splitted[7]}", "data-toggle" => "modal", "data-target" => "#modChart"
                       end
                     end
                   end
@@ -104,7 +104,7 @@ ActiveAdmin.register_page "Live Run" do
                         job_histories = tivoli_job.tivoli_histories.where.not(status: "ERR").order(:start_datetime).last(10)
                         dates         = job_histories.collect{|x| x.start_datetime.strftime('%m/%d')}
                         elapsed_times = job_histories.collect{|x| x.elapsed_time[3..4]} 
-                        link_to @chart.html_safe, "#", "data-dates" => "#{ dates }", "data-elapsed_time" => "#{ elapsed_times }", "data-toggle" => "modal", "data-target" => "#modChart"
+                        link_to @chart.html_safe, "#", "data-dates" => "#{ dates }", "data-elapsed_time" => "#{ elapsed_times }", "data-job_name" => "#{line_splitted[7]}", "data-toggle" => "modal", "data-target" => "#modChart"
                       end
                     end
                   end
@@ -165,7 +165,7 @@ ActiveAdmin.register_page "Live Run" do
                         job_histories = tivoli_job.tivoli_histories.where.not(status: "ERR").order(:start_datetime).last(10)
                         dates         = job_histories.collect{|x| x.start_datetime.strftime('%m/%d')}
                         elapsed_times = job_histories.collect{|x| x.elapsed_time[3..4]} 
-                        link_to @chart.html_safe, "#", "data-dates" => "#{ dates }", "data-elapsed_time" => "#{ elapsed_times }", "data-toggle" => "modal", "data-target" => "#modChart"
+                        link_to @chart.html_safe, "#", "data-dates" => "#{ dates }", "data-elapsed_time" => "#{ elapsed_times }", "data-job_name" => "#{line_splitted[7]}", "data-toggle" => "modal", "data-target" => "#modChart"
                       end
                     end
                   end

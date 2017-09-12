@@ -2,14 +2,14 @@ var vTimeOut;
 
 $(function() {
 	if ("/admin/live_run" === window.location.pathname) {
-  		vTimeOut = setTimeout(startRefresh, 60000)
+  		vTimeOut = setTimeout(startRefresh, 150000)
   	}
 });
 
 function startRefresh() {
     //setTimeout(startRefresh,15000);
     clearInterval(vTimeOut);
-	vTimeOut= setTimeout(startRefresh, 60000);
+	vTimeOut= setTimeout(startRefresh, 150000);
 	location.reload(); 
 }
 
@@ -26,6 +26,7 @@ $(document).on('ready', function() {
 		var link = $(e.relatedTarget);
 		var labels = JSON.parse(link.attr('data-dates'));
 		var source = JSON.parse(link.attr('data-elapsed_time'));
+		var title = "Job " + link.attr('data-job_name') + " - Elapsed Time in minutes";
 	    //modal.find('.modal-title').html("Chart");
 	    var ctx = canvas[0].getContext("2d");
 	    //ctx.data('elapsed_time', e.currentTarget.dataset.elapsed_time);
@@ -35,7 +36,7 @@ $(document).on('ready', function() {
 		    data: {
 		        labels: labels, //JSON.parse(e.currentTarget.dataset.dates),
 		        datasets: [{
-		            label: 'Elapsed Time in minutes',
+		            label: title,
 		            data: source, //JSON.parse(e.currentTarget.dataset.elapsed_time),
 		        }]
 		    },

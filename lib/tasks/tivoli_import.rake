@@ -11,14 +11,15 @@ namespace :tivoli_import do
 	@dt_end = args[:dt_end] #args[:date_to_import].split(',')[1]
 	@username = ENV['AHE_SERVER_USER']
 	@password = ENV['AHE_SERVER_PWD']
-	@workstations = ["B03ACIAPP017.ahe.boulder.ibm.com","B03ACIAPP018.ahe.boulder.ibm.com","B03ACIAPP019.ahe.boulder.ibm.com"] 
+	#@workstations = ["B03ACIAPP017.ahe.boulder.ibm.com","B03ACIAPP018.ahe.boulder.ibm.com","B03ACIAPP019.ahe.boulder.ibm.com"] 
+	@workstations = ["B03ACIAPP019.ahe.boulder.ibm.com"] 
 	@date_range = ( @dt_start.to_date..@dt_end.to_date ).map(&:to_date) #.collect{|d| d.strftime("%m.%d")}
 	@count = 0
 
   p "Creating load script for date #{@dt_start} to #{@dt_end}"
 	@workstations.each do |w|
 		@hostname = w
-		p "#{@hostname} - #{@username}: #{@password}"
+		p "#{@hostname} - #{@username}: xxxxx"
 		@ssh = Net::SSH.start(@hostname, @username, :password => @password)
 		p "#{w} Server logged!"
 		
@@ -31,6 +32,7 @@ namespace :tivoli_import do
 			### uncomment this line below and comment the next line, if you want to perform the load for 1 specific job
 			#tiv_temp = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv #{d.strftime("%m.%d")} |grep EIW_OPPDTL_30_DM_30").split("\n")
 			tiv_temp = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv #{d.strftime("%m.%d")}").split("\n")
+			byebug
 			@count 	 += tiv_temp.count
 
 			# code below will produce array[STATUS, DT_START, DT_END, WORKSTATION#STREAM.JOB, LOG]
@@ -56,8 +58,14 @@ namespace :tivoli_import do
 		end
 		p "saving data from server #{@hostname} on DB..."
 		p query
-	  	TivoliHistory.create(query)
-	    p "jobs updated!"
+  	TivoliHistory.create(query)
+    p "History jobs updated!"
+    p "Updating elapsed time..."
+    if populate_elapsed_time
+    	p "Elapsed time updated!"
+    else 
+    	p "Elapsed time got an error, please check!"
+    end
 	end
 	
   end
@@ -187,6 +195,18 @@ namespace :tivoli_import do
 
   private
 
+  def populate_elapsed_time 
+  	begin 
+	  	TivoliHistory.where(elapsed_time: nil).each do |t|
+	    	t.update( elapsed_time: Time.at(t.end_datetime - t.start_datetime).utc.strftime("%H:%M:%S") )
+	    end
+	  	return true
+	  rescue StandardError => e
+	  	print e 
+	  	return false
+	  end
+	end
+
   def prepare_stream_related(stream)
   	stream_splitted = stream.split('_')
 		i 							= stream_splitted.length - 1
@@ -204,8 +224,8 @@ namespace :tivoli_import do
 
 		if tiv.blank?
 			stream_related 	= prepare_stream_related(stream)
-	  		user 			= ssh.exec!("head #{log} |grep USER").split(' ')[3]
-			script 			= ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
+	  	user 						= ssh.exec!("head #{log} |grep USER").split(' ')[3]
+			script 					= ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
 
 			p tiv_new = TivoliJob.create(workstation: workstation, stream: stream, job: job, server_run: server_run, user_id_run: user, script: script, stream_related: stream_related)
 			

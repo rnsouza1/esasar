@@ -15,7 +15,7 @@ group :assets do
   gem 'sass-rails',   '~> 5.0.6'
   gem 'coffee-rails', '~> 4.2.1'
   # See https://github.com/sstephenson/execjs#readme for more supported runtimes
-  # gem 'therubyracer', :platforms => :ruby
+  gem 'therubyracer', :platforms => :ruby
 
   gem 'uglifier', '>= 3.2.0'
 end
@@ -50,9 +50,10 @@ gem 'rails_12factor'
 # To use debugger
 # gem 'debugger'
 
-	gem 'dotenv-rails'
+gem 'dotenv-rails'
 group :development, :test do
 	gem 'factory_girl_rails'
 	gem 'byebug'
-	
+	gem 'better_errors'	
+	gem 'binding_of_caller'
 end
