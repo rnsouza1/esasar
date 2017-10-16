@@ -27,7 +27,8 @@ test:
 
 production:
   <<: *default
-  database: esasar_staging
-  host: localhost
-  username: <%= ENV['APP_DATABASE_USERNAME']%>
-  password: <%= ENV['APP_DATABASE_PASSWORD']%>
+  database: ogvvrkob
+  port: 5432
+  host: echo-01.db.elephantsql.com
+  username: ogvvrkob
+  password: liDvTv8Ci1DUuqb44n5R6RFpKfjXwy-K

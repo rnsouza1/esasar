@@ -2,14 +2,14 @@ var vTimeOut;
 
 $(function() {
 	if ("/admin/live_run" === window.location.pathname) {
-  		vTimeOut = setTimeout(startRefresh, 150000)
+  		vTimeOut = setTimeout(startRefresh, 15000)
   	}
 });
 
 function startRefresh() {
     //setTimeout(startRefresh,15000);
     clearInterval(vTimeOut);
-	vTimeOut= setTimeout(startRefresh, 150000);
+	vTimeOut= setTimeout(startRefresh, 15000);
 	location.reload(); 
 }
 

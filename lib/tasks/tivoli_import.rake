@@ -32,7 +32,6 @@ namespace :tivoli_import do
 			### uncomment this line below and comment the next line, if you want to perform the load for 1 specific job
 			#tiv_temp = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv #{d.strftime("%m.%d")} |grep EIW_OPPDTL_30_DM_30").split("\n")
 			tiv_temp = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv #{d.strftime("%m.%d")}").split("\n")
-			byebug
 			@count 	 += tiv_temp.count
 
 			# code below will produce array[STATUS, DT_START, DT_END, WORKSTATION#STREAM.JOB, LOG]
@@ -48,7 +47,7 @@ namespace :tivoli_import do
 				end_datetime	= c[2]
 				log 			= c[4]
 				
-				tivoli_job_id = check_tivoli_job(workstation, stream, job, @hostname, log, @ssh)
+				tivoli_job_id = check_tivoli_job(workstation, stream, job, log)
 				
 				query << { "status" => status, "workstation" => workstation, "stream" => stream, "job" => job, "server_run" => @hostname , "start_datetime" => start_datetime.to_datetime, "end_datetime" => end_datetime.to_datetime, "log" => log, "tivoli_job_id" => tivoli_job_id } #, "user" => user, "script" => script }
 
@@ -161,32 +160,25 @@ namespace :tivoli_import do
 
 ##### to call this method send date by shell using this cmd: rake tivoli_import:live["B03ACIAPP017.ahe.boulder.ibm.com"]
   task :live, [:hostname] => :environment do |t, args|
-
 		@username = ENV['AHE_SERVER_USER']
 		@password = ENV['AHE_SERVER_PWD']
 		@hostname = args[:hostname]
+		p "Address to login: " + @hostname + @username + @password[0..3]
 		@ssh = Net::SSH.start(@hostname, @username, :password => @password)
 		p "#{@ssh.host} Server logged!"
-
-
 		while true
-			p get_dsd_data = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv") #.split("\n")
+			p tiv_data = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv")
 			
-			begin
-				directory = Rails.public_path
-				file = File.open( File.join(directory, 'live_tiv_data_'+@hostname+'.txt'), 'w') 
-				file.truncate(0)
-				file.write(get_dsd_data)
+			# will collect new jobs from hist, will compare jobs collected from server with jobs from file saved at last run
+			jobs_to_save = collect_jobs(tiv_data)
 
-			rescue IOError => e
-				p "some error occur when try to open the file or dir is not writable."
-			ensure
-				file.close unless file.nil?
-			end
-			arr = Array.new
-			p arr = File.readlines(File.join(directory, 'live_tiv_data_'+@hostname+'.txt')) #.collect{|c| c.gsub!("\t\t", "").gsub!("\n", "").split("\t")[1..10]}
+			# will save jobs and fill all fields and tables as necessary
+			saved_status = save_finished_jobs(jobs_to_save) if jobs_to_save.size > 0
+			
+			# will save captured file into file at server public path
+			store_job_history_collected_from_server(tiv_data) if saved_status
+
 			sleep 5
-			file.close unless file.nil?
 		end
 
 	end
@@ -195,6 +187,66 @@ namespace :tivoli_import do
 
   private
 
+  def collect_jobs(tiv_data)
+ 		# select only jobs as status is different of RUN
+  	jobs_finished_from_server = tiv_data.split("\n").select{|e| e.split(" ")[0][0..2] != "RUN"}
+  	jobs_from_file = File.readlines(File.join(Rails.public_path, 'live_tiv_data_'+@hostname+'.txt'))
+  		.select{|e| e.split(" ")[0][0..2] != "RUN"}
+  		.collect{|e| e.gsub("\n","")}
+	  	
+  	# get new jobs checking the difference between jobs hist arrays created above
+  	return (jobs_finished_from_server - jobs_from_file)
+  end
+
+  def save_finished_jobs(jobs_to_save)
+  	begin
+		  @query = []
+	  	jobs_to_save.each do |tiv|
+	  		year = Date.today.strftime("%Y")
+
+	  		t = tiv.split(' ')
+				status					= t[0][0..2]
+				workstation 		= t[7].split('#')[0]
+				job_split				= t[7][13..99].split('.')
+				stream 					= job_split[0]
+				job 						= job_split[1]
+				start_datetime 	= t[1]+"/#{year} "+t[2]
+				end_datetime		= t[4]+"/#{year} "+t[5]
+				log 						= t[8]
+				elapsed_time 		= Time.at(end_datetime.to_datetime - start_datetime.to_datetime).utc.strftime("%H:%M:%S")
+				
+				# create job at Job table only if it doesn't exist and return id to be created the relation into Job History table		
+				tivoli_job_id = check_tivoli_job(workstation, stream, job, log)
+				
+				@query << { status: status, workstation: workstation, stream: stream, job: job, server_run: @hostname , start_datetime: start_datetime.to_datetime, end_datetime: end_datetime.to_datetime, log: log, tivoli_job_id: tivoli_job_id, elapsed_time: elapsed_time }
+	  	end	
+			p "saving data from server #{@hostname} on DB and query is:"
+			p @query
+	  	TivoliHistory.create(@query)
+			p "jobs saved successfully!"
+	    return true
+	  rescue StandardError => e
+	   	p e
+	   	return false
+	  end
+  end
+
+  def store_job_history_collected_from_server(data)
+		begin
+			directory = Rails.public_path
+  		file_lock = File.open( File.join(directory, 'live_tiv_data_'+ @hostname +'.lock'), 'w')
+  		file_lock.close
+			file = File.open( File.join(directory, 'live_tiv_data_'+@hostname+'.txt'), 'w') 
+			file.write(data)
+			File.delete( File.join(directory, 'live_tiv_data_'+ @hostname +'.lock') )
+		rescue IOError => e
+			p "Got and error when writing data to the file."
+			p e
+		ensure
+			file.close
+		end
+  end
+
   def populate_elapsed_time 
   	begin 
 	  	TivoliHistory.where(elapsed_time: nil).each do |t|
@@ -202,7 +254,7 @@ namespace :tivoli_import do
 	    end
 	  	return true
 	  rescue StandardError => e
-	  	print e 
+	  	p e 
 	  	return false
 	  end
 	end
@@ -214,7 +266,7 @@ namespace :tivoli_import do
 		return new_stream
   end
 
-  def check_tivoli_job(workstation, stream, job, server_run, log, ssh)
+  def check_tivoli_job(workstation, stream, job, log)
   	tiv_original = TivoliJob.where(workstation: workstation, stream: stream, job: job)
   	if tiv_original.blank?
   		tiv = TivoliJob.where(workstation: workstation, stream_related: stream, job: job)
@@ -224,10 +276,10 @@ namespace :tivoli_import do
 
 		if tiv.blank?
 			stream_related 	= prepare_stream_related(stream)
-	  	user 						= ssh.exec!("head #{log} |grep USER").split(' ')[3]
-			script 					= ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
+	  	user 						= @ssh.exec!("head #{log} |grep USER").split(' ')[3]
+			script 					= @ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
 
-			p tiv_new = TivoliJob.create(workstation: workstation, stream: stream, job: job, server_run: server_run, user_id_run: user, script: script, stream_related: stream_related)
+			p tiv_new = TivoliJob.create(workstation: workstation, stream: stream, job: job, server_run: @hostname, user_id_run: user, script: script, stream_related: stream_related)
 			
 			return tiv_new.id
 		else 

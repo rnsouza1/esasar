@@ -3,7 +3,7 @@ ActiveAdmin.register TivoliJob do
   
   index do
     #selectable_column
-    #id_column
+    id_column
     #column :server_run
     column "Job Name" do |j|
       link_to j.fulljobname, admin_tivoli_job_url(j), title: "Check job details and graphic performance"
@@ -17,7 +17,7 @@ ActiveAdmin.register TivoliJob do
     column :user_id_run
     #column :schedule
     column :script
-    #column :dependency
+    column :dependency
     column "" do |j|
       link_to fa_icon('book 2x'), admin_tivoli_histories_path + "?utf8=%E2%9C%93&q%5Bworkstation_equals%5D=#{j.workstation}&q%5Bjob_equals%5D=#{j.job}&commit=Filter&order=id_desc", title: "Check job history" 
     end

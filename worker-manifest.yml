@@ -1,0 +1,14 @@
+applications:
+- path: .
+  name: esasar-worker
+  memory: 256M
+  instances: 1
+  domain: w3ibm.mybluemix.net
+  name: ESASAR-workers
+  disk_quota: 1024M
+#  command: bundle exec sidekiq
+  command: rake datastage_import:live
+#  command: rake tivoli_import:live["B03ACIAPP017.ahe.boulder.ibm.com"] --trace
+#  command: rake tivoli_import:live["B03ACIAPP018.ahe.boulder.ibm.com"] --trace
+#  command: rake tivoli_import:live["B03ACIAPP019.ahe.boulder.ibm.com"] --trace
+  no-route: true

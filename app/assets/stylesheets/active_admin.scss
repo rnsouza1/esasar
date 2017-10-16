@@ -41,10 +41,12 @@
 	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif !important;
 }
 .text{
-	min-width: 380px !important
+	min-width: 390px !important
 }
 #liverun .panel_contents{ 
 	background-color: white;
 	float: left;
 	padding: 10px;
+	overflow-y: auto;
+	max-height: 400px;
 }
