@@ -70,3 +70,4 @@ pickle-email-*.html
 
 # tilde files are usually backup files from a text editor
 *~
+/.project

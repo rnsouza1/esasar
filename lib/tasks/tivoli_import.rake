@@ -7,21 +7,21 @@ require 'net/ssh'
 ##### to call this method send date by shell using this cmd: rake tivoli_import:jobs_history["02/08/2017, 21/08/2017"]
 namespace :tivoli_import do
   task :jobs_history, [:dt_start, :dt_end] => :environment do |t, args|
-	@dt_start = args[:dt_start] #args[:date_to_import].split(',')[0]
-	@dt_end = args[:dt_end] #args[:date_to_import].split(',')[1]
+	@dt_start = args[:dt_start]
+	@dt_end = args[:dt_end]
 	@username = ENV['AHE_SERVER_USER']
 	@password = ENV['AHE_SERVER_PWD']
-	#@workstations = ["B03ACIAPP017.ahe.boulder.ibm.com","B03ACIAPP018.ahe.boulder.ibm.com","B03ACIAPP019.ahe.boulder.ibm.com"] 
-	@workstations = ["B03ACIAPP019.ahe.boulder.ibm.com"] 
-	@date_range = ( @dt_start.to_date..@dt_end.to_date ).map(&:to_date) #.collect{|d| d.strftime("%m.%d")}
+	@date_range = ( @dt_start.to_date..@dt_end.to_date ).map(&:to_date)
+	#workstations = Rails.env.development? ? ENV['AHE_WORKSTATIONS_DEV'] : ENV['AHE_WORKSTATIONS_PROD']
+	workstations = Workstation.select("id, url, port").all
 	@count = 0
-
   p "Creating load script for date #{@dt_start} to #{@dt_end}"
-	@workstations.each do |w|
-		@hostname = w
+	workstations.each do |w|
+		@hostname = w.url
+		@port = w.port
 		p "#{@hostname} - #{@username}: xxxxx"
-		@ssh = Net::SSH.start(@hostname, @username, :password => @password)
-		p "#{w} Server logged!"
+		@ssh = Net::SSH.start(@hostname, @username, {:password => @password, :port => @port})
+		p "#{@hostname} Server logged!"
 		
 		query = []
 		@date_range.each do |d| 
@@ -32,20 +32,20 @@ namespace :tivoli_import do
 			### uncomment this line below and comment the next line, if you want to perform the load for 1 specific job
 			#tiv_temp = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv #{d.strftime("%m.%d")} |grep EIW_OPPDTL_30_DM_30").split("\n")
 			tiv_temp = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv #{d.strftime("%m.%d")}").split("\n")
-			@count 	 += tiv_temp.count
+			@count 	+= tiv_temp.count
 
 			# code below will produce array[STATUS, DT_START, DT_END, WORKSTATION#STREAM.JOB, LOG]
 			tiv_file = tiv_temp.collect{|e| t = e.split(' '); [ t[0][0..2], t[1]+"/#{year} "+t[2], t[4]+"/#{year} "+t[5], t[7], t[8] ]; }
 
 			tiv_file.each do |c|
-				status			= c[0]
-				workstation 	= c[3].split('#')[0]
-				job_split		= c[3][13..99].split('.')
-				stream 			= job_split[0]
-				job 			= job_split[1]
+				status					= c[0]
+				workstation 		= c[3].split('#')[0]
+				job_split				= c[3][13..99].split('.')
+				stream 					= job_split[0]
+				job 						= job_split[1]
 				start_datetime 	= c[1]
-				end_datetime	= c[2]
-				log 			= c[4]
+				end_datetime		= c[2]
+				log 						= c[4]
 				
 				tivoli_job_id = check_tivoli_job(workstation, stream, job, log)
 				
@@ -53,7 +53,7 @@ namespace :tivoli_import do
 
 				p status + ' ' + start_datetime.to_datetime.to_s + ' ' + end_datetime.to_datetime.to_s + ' ' + workstation + ' ' + stream + ' ' + job + ' ' + @hostname + ' ' + log  #+ ' ' +  user + ' ' +  script
 
-		  	end
+		  end
 		end
 		p "saving data from server #{@hostname} on DB..."
 		p query
@@ -159,28 +159,35 @@ namespace :tivoli_import do
 
 
 ##### to call this method send date by shell using this cmd: rake tivoli_import:live["B03ACIAPP017.ahe.boulder.ibm.com"]
-  task :live, [:hostname] => :environment do |t, args|
+#  task :live, [:hostname] => :environment do |t, args|
+  task :live, [:hostname] => :environment do
 		@username = ENV['AHE_SERVER_USER']
 		@password = ENV['AHE_SERVER_PWD']
-		@hostname = args[:hostname]
-		p "Address to login: " + @hostname + @username + @password[0..3]
-		@ssh = Net::SSH.start(@hostname, @username, :password => @password)
-		p "#{@ssh.host} Server logged!"
+		@ssh 			= []		
+		workstations = Workstation.select("id, url, port").all
+		#@hostname = args[:hostname]
 		while true
-			p tiv_data = @ssh.exec!("/db2/db2load1/opstools/joblog/ahe_tiv")
-			
-			# will collect new jobs from hist, will compare jobs collected from server with jobs from file saved at last run
-			jobs_to_save = collect_jobs(tiv_data)
+			workstations.each do |w|
+				@hostname = w.url			
+				p "Address to login: " + @hostname + @username + @password[0..3]
+				if @ssh[w.id].nil?
+					@ssh[w.id] = Net::SSH.start(@hostname, @username, :password => @password)
+					p "#{@ssh[w.id].host} Server logged!"
+				end
+				
+				p tiv_data = @ssh[w.id].exec!("/db2/db2load1/opstools/joblog/ahe_tiv")
+				
+				# will collect new jobs from hist, will compare jobs collected from server with jobs from file saved at last run
+				jobs_to_save = collect_jobs(tiv_data)
 
-			# will save jobs and fill all fields and tables as necessary
-			saved_status = save_finished_jobs(jobs_to_save) if jobs_to_save.size > 0
-			
-			# will save captured file into file at server public path
-			store_job_history_collected_from_server(tiv_data) if saved_status
-
+				# will save jobs and fill all fields and tables as necessary
+				saved_status = save_finished_jobs(jobs_to_save, @ssh[w.id]) if jobs_to_save.size > 0
+				
+				# will save captured file into file at server public path
+				store_job_history_collected_from_server(tiv_data) if saved_status
+			end
 			sleep 5
 		end
-
 	end
 
 
@@ -198,7 +205,7 @@ namespace :tivoli_import do
   	return (jobs_finished_from_server - jobs_from_file)
   end
 
-  def save_finished_jobs(jobs_to_save)
+  def save_finished_jobs(jobs_to_save, ssh)
   	begin
 		  @query = []
 	  	jobs_to_save.each do |tiv|
@@ -213,10 +220,10 @@ namespace :tivoli_import do
 				start_datetime 	= t[1]+"/#{year} "+t[2]
 				end_datetime		= t[4]+"/#{year} "+t[5]
 				log 						= t[8]
-				elapsed_time 		= Time.at(end_datetime.to_datetime - start_datetime.to_datetime).utc.strftime("%H:%M:%S")
+				elapsed_time 		= Time.at( Time.parse(end_datetime) - Time.parse(start_datetime) ).utc.strftime("%H:%M:%S")
 				
 				# create job at Job table only if it doesn't exist and return id to be created the relation into Job History table		
-				tivoli_job_id = check_tivoli_job(workstation, stream, job, log)
+				tivoli_job_id = check_tivoli_job(workstation, stream, job, log, ssh)
 				
 				@query << { status: status, workstation: workstation, stream: stream, job: job, server_run: @hostname , start_datetime: start_datetime.to_datetime, end_datetime: end_datetime.to_datetime, log: log, tivoli_job_id: tivoli_job_id, elapsed_time: elapsed_time }
 	  	end	
@@ -266,7 +273,7 @@ namespace :tivoli_import do
 		return new_stream
   end
 
-  def check_tivoli_job(workstation, stream, job, log)
+  def check_tivoli_job(workstation, stream, job, log, ssh)
   	tiv_original = TivoliJob.where(workstation: workstation, stream: stream, job: job)
   	if tiv_original.blank?
   		tiv = TivoliJob.where(workstation: workstation, stream_related: stream, job: job)
@@ -276,8 +283,8 @@ namespace :tivoli_import do
 
 		if tiv.blank?
 			stream_related 	= prepare_stream_related(stream)
-	  	user 						= @ssh.exec!("head #{log} |grep USER").split(' ')[3]
-			script 					= @ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
+	  	user 						= ssh.exec!("head #{log} |grep USER").split(' ')[3]
+			script 					= ssh.exec!("head #{log} |grep JCLFILE").split(' ')[3..99].join(' ')
 
 			p tiv_new = TivoliJob.create(workstation: workstation, stream: stream, job: job, server_run: @hostname, user_id_run: user, script: script, stream_related: stream_related)
 			

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170810232519) do
+ActiveRecord::Schema.define(version: 20171107191541) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -47,6 +47,11 @@ ActiveRecord::Schema.define(version: 20170810232519) do
     t.index ["reset_password_token"], name: "index_admins_on_reset_password_token", unique: true
   end
 
+  create_table "table_job_types", force: :cascade do |t|
+    t.string "job_type"
+    t.text "description"
+  end
+
   create_table "tivoli_histories", force: :cascade do |t|
     t.string "workstation"
     t.string "stream"
@@ -73,6 +78,13 @@ ActiveRecord::Schema.define(version: 20170810232519) do
     t.string "user_id_run"
     t.string "dependency"
     t.string "stream_related"
+  end
+
+  create_table "workstations", force: :cascade do |t|
+    t.string "name"
+    t.integer "port"
+    t.text "description"
+    t.string "url"
   end
 
   add_foreign_key "tivoli_histories", "tivoli_jobs"

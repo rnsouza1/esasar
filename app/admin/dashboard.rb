@@ -46,10 +46,10 @@ ActiveAdmin.register_page "Dashboard" do
       end
     end
 
-      columns do
-       column do
-          panel "Last 5 jobs with longest run" do
-           ul do
+    columns do
+      column do
+        panel "Last 5 jobs with longest run" do
+          ul do
             tivs_max_time_run = TivoliHistory.where("status = ? AND start_datetime BETWEEN ? AND ? ", "AOK", (Date.today - 60.days), Date.today).order(:elapsed_time).limit(10)
             tivs_max_time_run = tivs_max_time_run.order("elapsed_time DESC").first(5)
             tivs_max_time_run.map do |t|  
@@ -58,6 +58,7 @@ ActiveAdmin.register_page "Dashboard" do
           end
         end
       end
+    end
 
   end # content
 end

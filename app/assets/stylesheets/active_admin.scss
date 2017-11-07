@@ -35,7 +35,6 @@
  .column {
  	overflow-y: hidden;
  	overflow-x: hidden;
- 	max-height: 650px;
  }
  body,html {
 	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif !important;
@@ -47,6 +46,4 @@
 	background-color: white;
 	float: left;
 	padding: 10px;
-	overflow-y: auto;
-	max-height: 400px;
 }
