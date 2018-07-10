@@ -2,17 +2,19 @@ var vTimeOut;
 
 $(function() {
 	if ("/admin/live_run" === window.location.pathname) {
-  		vTimeOut = setTimeout(startRefresh, 15000)
+  		//startRefresh();
+  		clearInterval(vTimeOut);
+		vTimeOut = setTimeout(startRefresh, 15000);
   	}
 });
 
 function startRefresh() {
     //setTimeout(startRefresh,15000);
-    clearInterval(vTimeOut);
-	vTimeOut= setTimeout(startRefresh, 15000);
+    //clearInterval(vTimeOut);
+	//vTimeOut = setTimeout(startRefresh, 15000);
 	location.reload(); 
 }
-
+/*
 $(document).on('ready', function() {
 
 //	$('a.load-chart').click(function(e) {
@@ -59,3 +61,4 @@ $(document).on('ready', function() {
 	    $(this).data('bs.modal', null);
 	});	
 });
+*/

@@ -1,4 +1,4 @@
-$(document).on('ready page:load turbolinks:load', function() {
+$(document).on('ready page:load', function() {
   $('a.load-chart').click(function(e) {
     e.stopPropagation();  // prevent Rails UJS click event
     e.preventDefault();

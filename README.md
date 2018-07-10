@@ -17,3 +17,17 @@ The command `rails new <app name>` is used to create the files and folders that 
 
 [Install Ruby]: https://www.ruby-lang.org/en/documentation/installation
 [Getting Started with Rails]: http://guides.rubyonrails.org/v3.2.8/getting_started.html#creating-the-blog-application
+
+2. [Connect to Cloud Foundry console app - Bluemix]
++ cf ssh esasar -t -c "/tmp/lifecycle/launcher /home/vcap/app 'rails c' ''"
++ or connect only into ssh app terminal - cf ssh esasar
+
+3. [deploy]
++ cf push esasar -f web-manifest.yml
+
+4. [deploy workers]
++ cf push esasar-worker-tiv -f worker-tiv-manifest.yml
++ cf push esasar-worker-ds -f worker-ds-manifest.yml
+
+5. cf login
++ cf login -sso -a https://api.w3ibm.bluemix.net

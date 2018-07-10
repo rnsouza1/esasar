@@ -46,4 +46,10 @@
 	background-color: white;
 	float: left;
 	padding: 10px;
+	max-height: 200px;
+	margin-bottom: 20px;
+	overflow-y: scroll;
+}
+.datastage .panel_contents{ 
+	max-height: 1500px !important;
 }

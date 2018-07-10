@@ -1,0 +1,14 @@
+class AddWorktationToJob < ActiveRecord::Migration[5.1]
+  def up
+    add_reference :jobs, :workstation, foreign_key: true
+    populate_workstation_references
+  end
+
+  def down
+    remove_reference :jobs, :workstation
+  end
+
+  def populate_workstation_references
+  	
+  end
+end

@@ -1,0 +1,10 @@
+applications:
+- path: .
+  memory: 256M
+  instances: 1
+  domain: w3ibm.mybluemix.net
+  name: ESASAR-worker-tiv
+  disk_quota: 1024M
+  command: bundle exec rake db:migrate tivoli_import:live
+  #command: bundle exec rake datastage_import:live
+  no-route: true

@@ -1,14 +1,23 @@
 source 'https://rubygems.org'
-ruby "2.3.0"
-#gem 'rails', '~> 3.2.22'
+ruby "2.4.4"
+git_source(:github) do |repo_name|
+  repo_name = "#{repo_name}/#{repo_name}" unless repo_name.include?("/")
+  "https://github.com/#{repo_name}.git"
+end
+
 gem 'rails', '5.1.4'
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
-gem 'activeadmin', '1.0.0'
 gem 'pg', '0.20.0'
+#gem 'ibm_db', '~> 3.0', '>= 3.0.4'
 gem 'devise'
+gem 'activeadmin', '1.0.0'
 gem 'net-ssh'
+
+gem 'redis'
+gem 'redis-namespace'
+
 # Gems used only for assets and not required
 # in production environments by default.
 group :assets do
@@ -33,8 +42,8 @@ gem 'chartkick'
 gem 'groupdate'
 
 # Prevent Heroku inject plugins at deploy time
-gem 'rails_12factor'
-
+gem "cf-autoconfig", "~> 0.2.1"
+gem 'rails_12factor', group: :production
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 

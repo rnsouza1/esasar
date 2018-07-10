@@ -1,15 +1,15 @@
 applications:
 - path: .
-  memory: 256M
+  memory: 512M
   instances: 1
   domain: w3ibm.mybluemix.net
   name: ESASAR
   host: esasar
-  disk_quota: 1024M
-  command: bin/rails server -p $PORT -e $RAILS_ENV
-#  command: rake tivoli_import:live
-#  command: rake datastage_import:live
-#  command: rake db:migrate && bin/rails server -p $PORT -e $RAILS_ENV
+  disk_quota: 2048M
+#  command: bin/rails server -p $PORT -e $RAILS_ENV
+  #command: bundle exec rake tivoli_import:live
+  #command: bundle exec rake datastage_import:live
+  command: bundle exec rake db:migrate && bin/rails server -p $PORT -e $RAILS_ENV
 #  command: rake tivoli_import:jobs_history["28/08/2017, 30/08/2017"] not working connections
 #  command: rake tivoli_import:live["B03ACIAPP018.ahe.boulder.ibm.com"]
 #  command: rake tivoli_import:live["B03ACIAPP019.ahe.boulder.ibm.com"]

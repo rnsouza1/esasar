@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171107191541) do
+ActiveRecord::Schema.define(version: 20180129182652) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -18,14 +18,13 @@ ActiveRecord::Schema.define(version: 20171107191541) do
   create_table "active_admin_comments", force: :cascade do |t|
     t.string "namespace"
     t.text "body"
-    t.integer "resource_id"
     t.string "resource_type"
-    t.integer "author_id"
+    t.bigint "resource_id"
     t.string "author_type"
+    t.bigint "author_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["author_type", "author_id"], name: "index_active_admin_comments_on_author_type_and_author_id"
-    t.index ["namespace"], name: "index_active_admin_comments_on_namespace"
     t.index ["resource_type", "resource_id"], name: "index_active_admin_comments_on_resource_type_and_resource_id"
   end
 
@@ -47,15 +46,10 @@ ActiveRecord::Schema.define(version: 20171107191541) do
     t.index ["reset_password_token"], name: "index_admins_on_reset_password_token", unique: true
   end
 
-  create_table "table_job_types", force: :cascade do |t|
-    t.string "job_type"
-    t.text "description"
-  end
-
-  create_table "tivoli_histories", force: :cascade do |t|
+  create_table "job_histories", force: :cascade do |t|
     t.string "workstation"
     t.string "stream"
-    t.string "job"
+    t.string "job_name"
     t.string "server_run"
     t.datetime "start_datetime"
     t.datetime "end_datetime"
@@ -63,21 +57,37 @@ ActiveRecord::Schema.define(version: 20171107191541) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "tivoli_job_id"
+    t.bigint "job_id"
     t.string "elapsed_time"
-    t.index ["tivoli_job_id"], name: "index_tivoli_histories_on_tivoli_job_id"
+    t.bigint "job_type_id"
+    t.index ["job_id"], name: "index_job_histories_on_job_id"
+    t.index ["job_type_id"], name: "index_job_histories_on_job_type_id"
   end
 
-  create_table "tivoli_jobs", force: :cascade do |t|
+  create_table "job_tracks", force: :cascade do |t|
+    t.string "title"
+    t.bigint "job_id"
+    t.text "description"
+    t.index ["job_id"], name: "index_job_tracks_on_job_id"
+  end
+
+  create_table "job_types", force: :cascade do |t|
+    t.string "job_type"
+    t.text "description"
+  end
+
+  create_table "jobs", force: :cascade do |t|
     t.string "workstation"
     t.string "stream"
-    t.string "job"
+    t.string "job_name"
     t.string "server_run"
     t.string "schedule"
     t.string "script"
     t.string "user_id_run"
     t.string "dependency"
     t.string "stream_related"
+    t.bigint "job_type_id"
+    t.index ["job_type_id"], name: "index_jobs_on_job_type_id"
   end
 
   create_table "workstations", force: :cascade do |t|
@@ -85,7 +95,11 @@ ActiveRecord::Schema.define(version: 20171107191541) do
     t.integer "port"
     t.text "description"
     t.string "url"
+    t.string "url_alias"
   end
 
-  add_foreign_key "tivoli_histories", "tivoli_jobs"
+  add_foreign_key "job_histories", "job_types"
+  add_foreign_key "job_histories", "jobs"
+  add_foreign_key "job_tracks", "jobs"
+  add_foreign_key "jobs", "job_types"
 end

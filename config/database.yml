@@ -8,27 +8,26 @@ default: &default
   adapter: postgresql
   encoding: utf8
   pool: 5
+  host: db
+  # For details on connection pooling, see rails configuration guide
+  # http://guides.rubyonrails.org/configuring.html#database-pooling
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
 
 development:
   <<: *default
   database: esasar_staging
-  host: localhost
   username: <%= ENV['APP_DATABASE_USERNAME']%>
   password: <%= ENV['APP_DATABASE_PASSWORD']%>
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
+
 test:
   <<: *default
   database: esasar_test
-  host: localhost
   username: <%= ENV['APP_DATABASE_USERNAME']%>
   password: <%= ENV['APP_DATABASE_PASSWORD']%>
 
 production:
   <<: *default
-  database: ogvvrkob
-  port: 5432
-  host: echo-01.db.elephantsql.com
-  username: ogvvrkob
-  password: liDvTv8Ci1DUuqb44n5R6RFpKfjXwy-K
+  database: esasar_prod
+  username: drp
+  password: <%= ENV['DRP_DATABASE_PASSWORD'] %>
